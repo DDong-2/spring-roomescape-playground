@@ -25,6 +25,11 @@ public class ReservationController {
             @RequestBody ReservationRequest request
     ) {
 
+        if (request.date().isBlank() ||
+                request.time().isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         Long id = index.incrementAndGet();
 
         Reservation reservation = new Reservation(
@@ -46,10 +51,21 @@ public class ReservationController {
             @PathVariable Long id
     ) {
 
-        reservations.removeIf(
+        boolean removed = reservations.removeIf(
                 reservation -> reservation.id().equals(id)
         );
 
+        if (!removed) {
+            throw new NotFoundReservationException();
+        }
+
         return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(NotFoundReservationException.class)
+    public ResponseEntity<Void> handleNotFound(
+            NotFoundReservationException e
+    ) {
+        return ResponseEntity.notFound().build();
     }
 }
